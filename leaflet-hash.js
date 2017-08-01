@@ -5,11 +5,11 @@
 			(doc_mode === undefined || doc_mode > 7);
 	})();
 
-	L.Hash = function(map) {
+	L.Hash = function(map,param) {
 		this.onHashChange = L.Util.bind(this.onHashChange, this);
 
 		if (map) {
-			this.init(map);
+			this.init(map,param);
 		}
 	};
 
@@ -18,43 +18,54 @@
 			hash = hash.substr(1);
 		}
 		var args = hash.split("/");
-		if (args.length == 3) {
+                if (args.length < 3) {
+                        return false;
+                }
+                var retObj = {};
+		if (args.length >= 3) {
 			var zoom = parseInt(args[0], 10),
 			lat = parseFloat(args[1]),
 			lon = parseFloat(args[2]);
 			if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
 				return false;
 			} else {
-				return {
-					center: new L.LatLng(lat, lon),
-					zoom: zoom
-				};
-			}
-		} else {
-			return false;
+				retObj.center = new L.LatLng(lat, lon);
+				retObj.zoom = zoom;
+                        }
+		} 
+                if (args.length == 4) {
+			retObj.param = args[3];
 		}
+                return retObj;
 	};
 
-	L.Hash.formatHash = function(map) {
+	L.Hash.formatHash = function(map,param) {
 		var center = map.getCenter(),
 		    zoom = map.getZoom(),
 		    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
 
-		return "#" + [zoom,
+		retStr = "#" + [zoom,
 			center.lat.toFixed(precision),
 			center.lng.toFixed(precision)
 		].join("/");
+                
+                if (param) {
+                        retStr+="/" + param.get();
+                }
+                return retStr;
 	},
 
 	L.Hash.prototype = {
 		map: null,
+                param: null,
 		lastHash: null,
 
 		parseHash: L.Hash.parseHash,
 		formatHash: L.Hash.formatHash,
 
-		init: function(map) {
+		init: function(map,param) {
 			this.map = map;
+                        this.param = param;
 
 			// reset the hash
 			this.lastHash = null;
@@ -85,7 +96,7 @@
 				return false;
 			}
 
-			var hash = this.formatHash(this.map);
+			var hash = this.formatHash(this.map,this.param);
 			if (this.lastHash != hash) {
 				location.replace(hash);
 				this.lastHash = hash;
@@ -103,6 +114,10 @@
 				this.movingMap = true;
 
 				this.map.setView(parsed.center, parsed.zoom);
+                                
+                                if (parsed.param) {
+                                        this.param.set(parsed.param);
+                                }
 
 				this.movingMap = false;
 			} else {
@@ -150,8 +165,8 @@
 			this.isListening = false;
 		}
 	};
-	L.hash = function(map) {
-		return new L.Hash(map);
+	L.hash = function(map,param) {
+		return new L.Hash(map,param);
 	};
 	L.Map.prototype.addHash = function() {
 		this._hash = L.hash(this);

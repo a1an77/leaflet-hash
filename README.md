@@ -21,6 +21,10 @@ You can view a demo of leaflet-hash at [mlevans.github.io/leaflet-hash/map.html]
         var hash = new L.Hash(map);
     ```
 
+### Optional parameter
+
+If you want to store an optional parameter in the hash you have to prepare an object to get/set the parameter in your application and pass it to the constructor of the hash. The parameter object must implement two methods: 'get' and 'set' to respectively get the current value of the parameter to be used in the hash or to set the map/application state according to the parameter present in the hash.
+
 ### Author
 [@mlevans](http://github.com/mlevans)
 
